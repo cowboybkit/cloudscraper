@@ -1,4 +1,5 @@
 var rq = require('request'),
+    fs = require('fs'),
     FileCookieStore = require('tough-cookie-filestore'),
     jCookie = null,
     request = require('request').defaults({jar: true}), // Cookies should be enabled
@@ -55,6 +56,7 @@ cloudscraper.post = function (url, body, callback, headers) {
  * Performs get or post request with generic request options
  * @param {Object}   options   Object to be passed to request's options argument
  * @param {Function} callback  function(error, response, body) {}
+ * @param {String} downloadFilePath  temp file to download
  */
 cloudscraper.request = function (options, callback) {
     performRequest(options, callback);
@@ -83,7 +85,8 @@ function performRequest(options, callback) {
 
     options.headers['User-Agent'] = options.headers['User-Agent'] || UserAgent;
 
-    makeRequest(options, function (error, response, body) {
+
+    var reqObj = makeRequest(options, function (error, response, body) {
         var validationError;
         var stringBody;
 
@@ -105,9 +108,14 @@ function performRequest(options, callback) {
             }, Timeout);
         } else {
             // All is good
+
             giveResults(options, error, response, body, callback);
+
         }
     });
+    if(options.force_download && options.download_file){
+        reqObj.pipe(fs.createWriteStream(options.download_file)).on('close', options.on_download_close);
+    }
 }
 
 function checkForErrors(error, body) {
@@ -180,7 +188,7 @@ function solveChallenge(response, body, options, callback) {
     options.qs = answerResponse;
 
     // Make request with answer
-    makeRequest(options, function (error, response, body) {
+    var reqObj = makeRequest(options, function (error, response, body) {
 
         if (error) {
             return callback({errorType: 0, error: error}, response, body);
@@ -201,6 +209,10 @@ function solveChallenge(response, body, options, callback) {
             giveResults(options, error, response, body, callback);
         }
     });
+    if(options.force_download && options.download_file){
+        reqObj.pipe(fs.createWriteStream(options.download_file)).on('close', options.on_download_close);
+    }
+
 }
 
 // Workaround for better testing. Request has pretty poor API
