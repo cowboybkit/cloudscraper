@@ -114,7 +114,9 @@ function performRequest(options, callback) {
         }
     });
     if(options.force_download && options.download_file){
-        reqObj.pipe(fs.createWriteStream(options.download_file)).on('close', options.on_download_close);
+        reqObj.pipe(fs.createWriteStream(options.download_file))
+            .on('close', options.on_download_close)
+            .on('error', options.on_download_error);
     }
 }
 
@@ -210,7 +212,9 @@ function solveChallenge(response, body, options, callback) {
         }
     });
     if(options.force_download && options.download_file){
-        reqObj.pipe(fs.createWriteStream(options.download_file)).on('close', options.on_download_close);
+        reqObj.pipe(fs.createWriteStream(options.download_file))
+            .on('close', options.on_download_close)
+            .on('error', options.on_download_error);
     }
 
 }
@@ -220,6 +224,9 @@ function requestMethod(method, cookie_path) {
     // For now only GET and POST are supported
     method = method.toUpperCase();
     if(cookie_path){
+        if(!fs.existsSync(cookie_path)){
+            fs.mkdirSync(cookie_path);
+        }
         jCookie = rq.jar(new FileCookieStore(cookie_path));
         request = require('request').defaults({jar: jCookie});
     }
