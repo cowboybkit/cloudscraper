@@ -224,8 +224,8 @@ function requestMethod(method, cookie_path) {
     // For now only GET and POST are supported
     method = method.toUpperCase();
     if(cookie_path){
-        if(!fs.existsSync(cookie_path)){
-            fs.mkdirSync(cookie_path);
+        if (!fs.existsSync(cookie_path)) {
+            fs.closeSync(fs.openSync(cookie_path, 'w'));
         }
         jCookie = rq.jar(new FileCookieStore(cookie_path));
         request = require('request').defaults({jar: jCookie});
